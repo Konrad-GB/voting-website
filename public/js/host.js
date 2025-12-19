@@ -13,48 +13,92 @@ document.getElementById('pollForm').addEventListener('submit', async (e) => {
 
   const title = document.getElementById('pollTitle').value;
   const mediaFile = document.getElementById('mediaFile').files[0];
+  const submitBtn = e.target.querySelector('button[type="submit"]');
 
   if (!mediaFile) {
     alert('Please select a video or image file');
     return;
   }
 
+  // Check file size (warn if over 50MB, block if over 100MB)
+  const fileSizeMB = mediaFile.size / (1024 * 1024);
+  if (fileSizeMB > 100) {
+    alert('File is too large (over 100MB). Please compress the video or choose a smaller file.');
+    return;
+  }
+  if (fileSizeMB > 50) {
+    const proceed = confirm(`This file is ${fileSizeMB.toFixed(1)}MB. Large files may take 1-2 minutes to upload. Continue?`);
+    if (!proceed) return;
+  }
+
+  // Show loading state
+  const originalBtnText = submitBtn.textContent;
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Uploading...';
+
   try {
     const reader = new FileReader();
     reader.onload = async function(event) {
-      const base64Data = event.target.result.split(',')[1];
+      try {
+        const base64Data = event.target.result.split(',')[1];
 
-      const response = await fetch(`/api/session/${sessionId}/poll`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title,
-          mediaData: base64Data,
-          mediaType: mediaFile.type,
-          fileName: mediaFile.name
-        })
-      });
+        // Update button to show upload progress
+        submitBtn.textContent = mediaFile.type.startsWith('video/') ? 'Uploading video (this may take 30-60 seconds)...' : 'Uploading image...';
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to add poll');
+        const response = await fetch(`/api/session/${sessionId}/poll`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title,
+            mediaData: base64Data,
+            mediaType: mediaFile.type,
+            fileName: mediaFile.name
+          })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to add poll');
+        }
+
+        const data = await response.json();
+
+        if (!data.poll) {
+          throw new Error('Invalid response from server');
+        }
+
+        polls.push(data.poll);
+        updatePollsList();
+        document.getElementById('pollForm').reset();
+        document.getElementById('startVotingBtn').disabled = false;
+
+        // Show success feedback
+        submitBtn.textContent = 'Poll Added!';
+        setTimeout(() => {
+          submitBtn.textContent = originalBtnText;
+          submitBtn.disabled = false;
+        }, 2000);
+
+      } catch (error) {
+        console.error('Error adding poll:', error);
+        alert('Error adding poll: ' + error.message);
+        submitBtn.textContent = originalBtnText;
+        submitBtn.disabled = false;
       }
-
-      const data = await response.json();
-
-      if (!data.poll) {
-        throw new Error('Invalid response from server');
-      }
-
-      polls.push(data.poll);
-      updatePollsList();
-      document.getElementById('pollForm').reset();
-      document.getElementById('startVotingBtn').disabled = false;
     };
+
+    reader.onerror = function() {
+      alert('Error reading file');
+      submitBtn.textContent = originalBtnText;
+      submitBtn.disabled = false;
+    };
+
     reader.readAsDataURL(mediaFile);
   } catch (error) {
     console.error('Error adding poll:', error);
     alert('Error adding poll: ' + error.message);
+    submitBtn.textContent = originalBtnText;
+    submitBtn.disabled = false;
   }
 });
 

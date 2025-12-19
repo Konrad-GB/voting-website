@@ -157,6 +157,7 @@ app.post('/api/session/:sessionId/poll', async (req, res) => {
       const isVideo = mediaType.startsWith('video');
 
       if (isVideo) {
+        console.log(`Uploading video to Cloudinary: ${fileName}`);
         // Upload videos to Cloudinary with compression
         const uploadResult = await cloudinary.uploader.upload(
           `data:${mediaType};base64,${mediaData}`,
@@ -171,11 +172,14 @@ app.post('/api/session/:sessionId/poll', async (req, res) => {
               { width: 1280, height: 720, crop: 'limit' }, // Max 720p
               { quality: 'auto:good' },
               { fetch_format: 'auto' }
-            ]
+            ],
+            timeout: 60000 // 60 second timeout
           }
         );
         mediaUrl = uploadResult.secure_url;
+        console.log(`Video uploaded successfully: ${mediaUrl}`);
       } else {
+        console.log(`Uploading image to ImgBB: ${fileName}`);
         // Upload images to ImgBB (unlimited)
         const formData = new URLSearchParams();
         formData.append('key', IMGBB_API_KEY);
@@ -188,10 +192,12 @@ app.post('/api/session/:sessionId/poll', async (req, res) => {
           {
             headers: {
               'Content-Type': 'application/x-www-form-urlencoded'
-            }
+            },
+            timeout: 30000 // 30 second timeout
           }
         );
         mediaUrl = uploadResult.data.data.url;
+        console.log(`Image uploaded successfully: ${mediaUrl}`);
       }
     }
 
@@ -208,7 +214,8 @@ app.post('/api/session/:sessionId/poll', async (req, res) => {
     res.json({ poll });
   } catch (error) {
     console.error('Error creating poll:', error);
-    res.status(500).json({ error: 'Failed to create poll' });
+    const errorMessage = error.message || 'Failed to create poll';
+    res.status(500).json({ error: errorMessage });
   }
 });
 
