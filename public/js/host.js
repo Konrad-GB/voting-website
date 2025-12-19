@@ -28,57 +28,57 @@ document.getElementById('pollForm').addEventListener('submit', async (e) => {
     return;
   }
 
-  // Convert Google Drive URLs to embeddable format
+  // Process URL based on type
   let processedUrl = mediaUrl;
-  let isGoogleDrive = false;
-  if (mediaUrl.includes('drive.google.com')) {
-    // Extract file ID from various Google Drive URL formats
-    let fileId = null;
+  let mediaType = 'image';
+  let isYouTube = false;
 
-    // Format 1: https://drive.google.com/file/d/FILE_ID/view
-    const match1 = mediaUrl.match(/\/file\/d\/([^\/]+)/);
+  // Check if it's a YouTube URL
+  if (mediaUrl.includes('youtube.com') || mediaUrl.includes('youtu.be')) {
+    // Extract YouTube video ID
+    let videoId = null;
+
+    // Format 1: https://www.youtube.com/watch?v=VIDEO_ID
+    const match1 = mediaUrl.match(/[?&]v=([^&]+)/);
     if (match1) {
-      fileId = match1[1];
+      videoId = match1[1];
     }
 
-    // Format 2: https://drive.google.com/open?id=FILE_ID
-    const match2 = mediaUrl.match(/[?&]id=([^&]+)/);
+    // Format 2: https://youtu.be/VIDEO_ID
+    const match2 = mediaUrl.match(/youtu\.be\/([^?&]+)/);
     if (match2) {
-      fileId = match2[1];
+      videoId = match2[1];
     }
 
-    // Format 3: https://drive.google.com/uc?id=FILE_ID
-    const match3 = mediaUrl.match(/\/uc\?.*id=([^&]+)/);
+    // Format 3: https://www.youtube.com/embed/VIDEO_ID
+    const match3 = mediaUrl.match(/youtube\.com\/embed\/([^?&]+)/);
     if (match3) {
-      fileId = match3[1];
+      videoId = match3[1];
     }
 
-    if (fileId) {
-      // Use Google Drive's direct content URL for embedding
-      // This works better for videos than the download URL
-      processedUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
-      isGoogleDrive = true;
-      console.log('Converted Google Drive URL:', processedUrl);
-      console.log('File ID:', fileId);
+    if (videoId) {
+      // Convert to embed URL
+      processedUrl = `https://www.youtube.com/embed/${videoId}`;
+      mediaType = 'video';
+      isYouTube = true;
+      console.log('Converted YouTube URL:', processedUrl);
+      console.log('Video ID:', videoId);
     } else {
-      alert('Could not extract Google Drive file ID. Please make sure the file is set to "Anyone with the link can view"');
+      alert('Could not extract YouTube video ID from URL');
       return;
     }
-  }
+  } else {
+    // For non-YouTube URLs, detect if it's an image
+    const urlLower = mediaUrl.toLowerCase();
 
-  // Detect media type from URL
-  const urlLower = processedUrl.toLowerCase();
-  let mediaType = 'image';
-
-  // Check for video extensions
-  if (urlLower.match(/\.(mp4|webm|mov|avi|mkv)(\?|$)/)) {
-    mediaType = 'video';
-  }
-  // Check for image extensions
-  else if (!urlLower.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?|$)/)) {
-    // If no recognized extension, ask user
-    const isVideo = confirm('Could not detect media type from URL.\n\nClick OK if this is a VIDEO, or Cancel if it\'s an IMAGE.');
-    mediaType = isVideo ? 'video' : 'image';
+    // Check for image extensions
+    if (urlLower.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?|$)/)) {
+      mediaType = 'image';
+      processedUrl = mediaUrl;
+    } else {
+      alert('Please use either:\n• YouTube URL for videos\n• Direct image URL (ending in .jpg, .png, .gif, etc.) for images');
+      return;
+    }
   }
 
   // Show loading state
@@ -164,29 +164,31 @@ async function startPoll(pollIndex) {
 
     const mediaContainer = document.getElementById('currentPollMedia');
 
-    // Display as a clickable link instead of embedding
-    const mediaTypeLabel = currentPoll.mediaType === 'video' ? 'Video' : 'Image';
-    const displayUrl = currentPoll.mediaUrl.length > 60
-      ? currentPoll.mediaUrl.substring(0, 60) + '...'
-      : currentPoll.mediaUrl;
-
-    mediaContainer.innerHTML = `
-      <div style="text-align: center; padding: 40px; background: #f7fafc; border-radius: 12px; border: 2px dashed #cbd5e0;">
-        <div style="font-size: 48px; margin-bottom: 20px;">
-          ${currentPoll.mediaType === 'video' ? '🎥' : '🖼️'}
+    if (currentPoll.mediaType === 'video') {
+      // Embed YouTube video
+      mediaContainer.innerHTML = `
+        <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%;">
+          <iframe
+            src="${currentPoll.mediaUrl}"
+            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen>
+          </iframe>
         </div>
-        <h3 style="margin-bottom: 15px; color: #2d3748;">Click to view ${mediaTypeLabel.toLowerCase()}</h3>
-        <a href="${currentPoll.mediaUrl}" target="_blank" rel="noopener noreferrer"
-           style="display: inline-block; padding: 15px 30px; background: #4299e1; color: white;
-                  text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 18px;
-                  transition: background 0.2s;">
-          Open ${mediaTypeLabel} in New Tab
-        </a>
-        <div style="margin-top: 20px; font-size: 12px; color: #718096; word-break: break-all;">
-          URL: ${displayUrl}
+      `;
+    } else {
+      // Display image
+      mediaContainer.innerHTML = `
+        <img src="${currentPoll.mediaUrl}" alt="${currentPoll.title}"
+             style="max-width: 100%; max-height: 700px; display: block; margin: 0 auto; border-radius: 8px;"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+        <div style="display: none; text-align: center; padding: 40px; background: #fed7d7; border-radius: 12px; color: #e53e3e;">
+          <strong>⚠️ Image failed to load</strong><br>
+          URL: ${currentPoll.mediaUrl}<br><br>
+          Make sure the image URL is publicly accessible.
         </div>
-      </div>
-    `;
+      `;
+    }
 
     document.getElementById('totalVotes').textContent = '0';
     document.getElementById('averageRating').textContent = '-';

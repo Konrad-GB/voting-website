@@ -34,29 +34,31 @@ function displayPoll(poll, hasVoted = false, voterRating = null) {
 
   const mediaContainer = document.getElementById('pollMedia');
 
-  // Display as a clickable link instead of embedding
-  const mediaTypeLabel = currentPoll.mediaType === 'video' ? 'Video' : 'Image';
-  const displayUrl = currentPoll.mediaUrl.length > 60
-    ? currentPoll.mediaUrl.substring(0, 60) + '...'
-    : currentPoll.mediaUrl;
-
-  mediaContainer.innerHTML = `
-    <div style="text-align: center; padding: 40px; background: #f7fafc; border-radius: 12px; border: 2px dashed #cbd5e0;">
-      <div style="font-size: 48px; margin-bottom: 20px;">
-        ${currentPoll.mediaType === 'video' ? '🎥' : '🖼️'}
+  if (currentPoll.mediaType === 'video') {
+    // Embed YouTube video
+    mediaContainer.innerHTML = `
+      <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%;">
+        <iframe
+          src="${currentPoll.mediaUrl}"
+          style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen>
+        </iframe>
       </div>
-      <h3 style="margin-bottom: 15px; color: #2d3748;">Click to view ${mediaTypeLabel.toLowerCase()}</h3>
-      <a href="${currentPoll.mediaUrl}" target="_blank" rel="noopener noreferrer"
-         style="display: inline-block; padding: 15px 30px; background: #4299e1; color: white;
-                text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 18px;
-                transition: background 0.2s;">
-        Open ${mediaTypeLabel} in New Tab
-      </a>
-      <div style="margin-top: 20px; font-size: 12px; color: #718096; word-break: break-all;">
-        URL: ${displayUrl}
+    `;
+  } else {
+    // Display image
+    mediaContainer.innerHTML = `
+      <img src="${currentPoll.mediaUrl}" alt="${currentPoll.title}"
+           style="max-width: 100%; max-height: 700px; display: block; margin: 0 auto; border-radius: 8px;"
+           onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+      <div style="display: none; text-align: center; padding: 40px; background: #fed7d7; border-radius: 12px; color: #e53e3e;">
+        <strong>⚠️ Image failed to load</strong><br>
+        URL: ${currentPoll.mediaUrl}<br><br>
+        Make sure the image URL is publicly accessible.
       </div>
-    </div>
-  `;
+    `;
+  }
 
   if (hasVoted && voterRating !== null) {
     ratingSlider.value = voterRating;

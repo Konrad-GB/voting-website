@@ -33,11 +33,11 @@
             <label for="mediaUrl">Media URL (Image or Video):</label>
             <input type="url" id="mediaUrl" required placeholder="https://example.com/image.jpg or video.mp4">
             <small style="color: #666; display: block; margin-top: 5px;">
-              <strong>Supported sources:</strong><br>
-              • <strong>Google Drive:</strong> Just paste the sharing link (e.g., https://drive.google.com/file/d/...) - will auto-convert!<br>
-              • <strong>Imgur:</strong> Right-click → "Copy image/video address"<br>
-              • <strong>Direct URLs:</strong> Any link ending in .jpg, .png, .gif, .mp4, .webm, etc.<br>
-              <strong>⚠️ Won't work:</strong> ClickUp, Slack, Notion (authentication/CORS issues)
+              <strong>📹 For Videos:</strong> Use YouTube URLs (e.g., https://youtube.com/watch?v=xxxxx or https://youtu.be/xxxxx)<br>
+              <strong>🖼️ For Images:</strong> Use direct image URLs from Imgur, etc. (must end in .jpg, .png, .gif, .webp, etc.)<br>
+              <br>
+              <strong style="color: #48bb78;">✓ Works:</strong> YouTube videos, Imgur images, direct image URLs<br>
+              <strong style="color: #e53e3e;">✗ Won't work:</strong> Video files (.mp4), Google Drive, ClickUp, private URLs
             </small>
           </div>
           <button type="submit" class="btn btn-primary">Add Poll</button>
