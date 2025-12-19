@@ -77,7 +77,12 @@ app.get('/vote/:sessionId', (req, res) => {
 async function getSession(sessionId) {
   const session = await redis.get(`session:${sessionId}`);
   if (session && session.votes) {
-    session.votes = new Map(Object.entries(session.votes));
+    // Convert votes object back to Map of Maps
+    const votesMap = new Map();
+    for (const [pollId, pollVotesObj] of Object.entries(session.votes)) {
+      votesMap.set(pollId, new Map(Object.entries(pollVotesObj)));
+    }
+    session.votes = votesMap;
   }
   if (session && session.voters) {
     session.voters = new Map(Object.entries(session.voters));
@@ -88,7 +93,12 @@ async function getSession(sessionId) {
 async function saveSession(sessionId, session) {
   const sessionToSave = { ...session };
   if (session.votes instanceof Map) {
-    sessionToSave.votes = Object.fromEntries(session.votes);
+    // Convert Map of Maps to object of objects
+    const votesObj = {};
+    for (const [pollId, pollVotesMap] of session.votes.entries()) {
+      votesObj[pollId] = Object.fromEntries(pollVotesMap);
+    }
+    sessionToSave.votes = votesObj;
   }
   if (session.voters instanceof Map) {
     sessionToSave.voters = Object.fromEntries(session.voters);
