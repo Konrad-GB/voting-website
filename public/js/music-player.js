@@ -41,7 +41,8 @@
     // Load saved settings from localStorage
     const savedVolume = localStorage.getItem('musicVolume') || 50;
     const wasMuted = localStorage.getItem('musicMuted') === 'true';
-    const wasPlaying = localStorage.getItem('musicPlaying') === 'true';
+    // Default to playing if not set
+    const wasPlaying = localStorage.getItem('musicPlaying') !== 'false';
 
     // Set initial volume
     audio.volume = savedVolume / 100;
