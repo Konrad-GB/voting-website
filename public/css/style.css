@@ -522,6 +522,100 @@ h3 {
   margin-right: 10px;
 }
 
+/* Music Player Styles */
+.music-player {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 15px 20px;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  z-index: 1000;
+  min-width: 250px;
+}
+
+.music-player.minimized {
+  min-width: auto;
+  padding: 12px;
+}
+
+.music-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.music-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  padding: 8px;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  color: #667eea;
+}
+
+.music-btn:hover {
+  background: #f0f0f0;
+  transform: scale(1.1);
+}
+
+.music-btn:active {
+  transform: scale(0.95);
+}
+
+.volume-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.volume-slider {
+  width: 100px;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: #ddd;
+  border-radius: 3px;
+  outline: none;
+}
+
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: #667eea;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.volume-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: #667eea;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+.music-info {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+}
+
 @media (max-width: 768px) {
   .welcome-card, .host-dashboard, .voter-view {
     padding: 20px;
@@ -552,5 +646,15 @@ h3 {
 
   .poll-summary {
     flex-wrap: wrap;
+  }
+
+  .music-player {
+    bottom: 10px;
+    right: 10px;
+    min-width: 200px;
+  }
+
+  .volume-slider {
+    width: 60px;
   }
 }
