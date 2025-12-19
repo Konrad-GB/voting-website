@@ -90,7 +90,7 @@
       }
     });
 
-    // Auto-play if it was playing before (with user interaction required)
+    // Auto-play if it was playing before or on first visit (with user interaction required)
     if (wasPlaying) {
       // Try to play, but browsers may block auto-play
       const playPromise = audio.play();
@@ -98,11 +98,13 @@
         playPromise
           .then(() => {
             playPauseBtn.textContent = '⏸️';
+            localStorage.setItem('musicPlaying', 'true');
           })
           .catch(err => {
             // Auto-play was prevented, show play button
             console.log('Auto-play prevented:', err);
             playPauseBtn.textContent = '▶️';
+            localStorage.setItem('musicPlaying', 'false');
           });
       }
     }
