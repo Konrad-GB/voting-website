@@ -28,8 +28,9 @@ document.getElementById('pollForm').addEventListener('submit', async (e) => {
     return;
   }
 
-  // Convert Google Drive URLs to direct download format
+  // Convert Google Drive URLs to embeddable format
   let processedUrl = mediaUrl;
+  let isGoogleDrive = false;
   if (mediaUrl.includes('drive.google.com')) {
     // Extract file ID from various Google Drive URL formats
     let fileId = null;
@@ -53,9 +54,12 @@ document.getElementById('pollForm').addEventListener('submit', async (e) => {
     }
 
     if (fileId) {
-      // Convert to direct download URL
-      processedUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+      // Use Google Drive's direct content URL for embedding
+      // This works better for videos than the download URL
+      processedUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
+      isGoogleDrive = true;
       console.log('Converted Google Drive URL:', processedUrl);
+      console.log('File ID:', fileId);
     } else {
       alert('Could not extract Google Drive file ID. Please make sure the file is set to "Anyone with the link can view"');
       return;
@@ -160,6 +164,9 @@ async function startPoll(pollIndex) {
 
     const mediaContainer = document.getElementById('currentPollMedia');
     if (currentPoll.mediaType === 'video') {
+      // Check if it's a Google Drive URL
+      const isGoogleDrive = currentPoll.mediaUrl.includes('drive.google.com');
+
       // Detect video type from URL
       const url = currentPoll.mediaUrl.toLowerCase();
       let videoType = 'video/mp4';
@@ -168,7 +175,7 @@ async function startPoll(pollIndex) {
       else if (url.includes('.avi')) videoType = 'video/x-msvideo';
 
       mediaContainer.innerHTML = `
-        <video controls autoplay style="max-width: 100%; max-height: 700px;" id="pollVideo" crossorigin="anonymous">
+        <video controls autoplay style="max-width: 100%; max-height: 700px;" id="pollVideo" ${!isGoogleDrive ? 'crossorigin="anonymous"' : ''}>
           <source src="${currentPoll.mediaUrl}" type="${videoType}">
           Your browser does not support the video tag.
         </video>
@@ -177,9 +184,9 @@ async function startPoll(pollIndex) {
           URL: <code style="font-size: 11px; word-break: break-all;">${currentPoll.mediaUrl}</code><br><br>
           Possible issues: CORS restrictions, authentication required, or unsupported format.<br>
           <strong>Tips:</strong><br>
-          • For Imgur: Right-click video → "Copy video address" (must end in .mp4 or .webm)<br>
-          • For Google Drive: Use direct download link format<br>
-          • Try a different hosting service like Streamable
+          ${isGoogleDrive ?
+            '• Make sure the Google Drive file is set to "Anyone with the link can view"<br>• Try downloading and re-hosting on Imgur or Streamable' :
+            '• For Imgur: Right-click video → "Copy video address" (must end in .mp4 or .webm)<br>• For Google Drive: Make sure file is public<br>• Try a different hosting service like Streamable'}
         </div>
       `;
 
@@ -191,6 +198,7 @@ async function startPoll(pollIndex) {
             console.error('Video load error:', e);
             console.error('Video URL:', currentPoll.mediaUrl);
             console.error('Video type:', videoType);
+            console.error('Is Google Drive:', isGoogleDrive);
             document.getElementById('videoError').style.display = 'block';
           });
 

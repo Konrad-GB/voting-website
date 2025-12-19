@@ -34,6 +34,9 @@ function displayPoll(poll, hasVoted = false, voterRating = null) {
 
   const mediaContainer = document.getElementById('pollMedia');
   if (currentPoll.mediaType === 'video') {
+    // Check if it's a Google Drive URL
+    const isGoogleDrive = currentPoll.mediaUrl.includes('drive.google.com');
+
     // Detect video type from URL
     const url = currentPoll.mediaUrl.toLowerCase();
     let videoType = 'video/mp4';
@@ -42,7 +45,7 @@ function displayPoll(poll, hasVoted = false, voterRating = null) {
     else if (url.includes('.avi')) videoType = 'video/x-msvideo';
 
     mediaContainer.innerHTML = `
-      <video controls autoplay style="max-width: 100%; max-height: 700px;" id="pollVideo" crossorigin="anonymous">
+      <video controls autoplay style="max-width: 100%; max-height: 700px;" id="pollVideo" ${!isGoogleDrive ? 'crossorigin="anonymous"' : ''}>
         <source src="${currentPoll.mediaUrl}" type="${videoType}">
         Your browser does not support the video tag.
       </video>
