@@ -11,20 +11,58 @@ const app = express();
 app.use(express.json({ limit: '50mb' }));
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
+// Validate environment variables
+const requiredEnvVars = [
+  'UPSTASH_REDIS_REST_URL',
+  'UPSTASH_REDIS_REST_TOKEN',
+  'IMGBB_API_KEY',
+  'CLOUDINARY_CLOUD_NAME',
+  'CLOUDINARY_API_KEY',
+  'CLOUDINARY_API_SECRET'
+];
+
+const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
+if (missingEnvVars.length > 0) {
+  console.error('Missing environment variables:', missingEnvVars);
+  // Don't crash, but log the error
+}
+
 // Initialize Upstash Redis
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN,
-});
+let redis;
+try {
+  redis = new Redis({
+    url: process.env.UPSTASH_REDIS_REST_URL,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN,
+  });
+} catch (error) {
+  console.error('Failed to initialize Redis:', error);
+}
 
 // ImgBB API Key for images (get from https://api.imgbb.com/)
 const IMGBB_API_KEY = process.env.IMGBB_API_KEY;
 
 // Cloudinary for videos (get from https://cloudinary.com/)
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+try {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  });
+} catch (error) {
+  console.error('Failed to configure Cloudinary:', error);
+}
+
+// Health check endpoint for debugging
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    env: {
+      hasRedis: !!redis,
+      hasImgBB: !!IMGBB_API_KEY,
+      hasCloudinary: !!(process.env.CLOUDINARY_CLOUD_NAME)
+    }
+  });
 });
 
 // Serve HTML pages
