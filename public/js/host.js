@@ -27,14 +27,19 @@ document.getElementById('pollForm').addEventListener('submit', async (e) => {
     return;
   }
 
-  // Check file size (warn if over 50MB, block if over 100MB)
+  // Check file size - Vercel free tier has 4.5MB payload limit
+  // Base64 encoding adds ~33% overhead, so limit files to 3MB
   const fileSizeMB = mediaFile.size / (1024 * 1024);
-  if (fileSizeMB > 100) {
-    alert('File is too large (over 100MB). Please compress the video or choose a smaller file.');
+  if (fileSizeMB > 3) {
+    alert(`File is too large (${fileSizeMB.toFixed(1)}MB). Vercel has a 4.5MB payload limit.\n\n` +
+          'Please reduce file size:\n' +
+          '• GIFs: Convert to MP4 at ezgif.com/gif-to-mp4 (70-90% smaller)\n' +
+          '• Images: Compress at tinypng.com or ezgif.com/optimize\n' +
+          '• Videos: Compress at freeconvert.com/video-compressor');
     return;
   }
-  if (fileSizeMB > 50) {
-    const proceed = confirm(`This file is ${fileSizeMB.toFixed(1)}MB. Large files may take 1-2 minutes to upload. Continue?`);
+  if (fileSizeMB > 2) {
+    const proceed = confirm(`This file is ${fileSizeMB.toFixed(1)}MB. Upload may take 30-60 seconds. Continue?`);
     if (!proceed) return;
   }
 
