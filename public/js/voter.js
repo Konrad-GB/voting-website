@@ -34,9 +34,16 @@ function displayPoll(poll, hasVoted = false, voterRating = null) {
 
   const mediaContainer = document.getElementById('pollMedia');
   if (currentPoll.mediaType === 'video') {
+    // Detect video type from URL
+    const url = currentPoll.mediaUrl.toLowerCase();
+    let videoType = 'video/mp4';
+    if (url.includes('.webm')) videoType = 'video/webm';
+    else if (url.includes('.mov')) videoType = 'video/quicktime';
+    else if (url.includes('.avi')) videoType = 'video/x-msvideo';
+
     mediaContainer.innerHTML = `
-      <video controls autoplay style="max-width: 100%; max-height: 700px;" id="pollVideo">
-        <source src="${currentPoll.mediaUrl}" type="video/mp4">
+      <video controls autoplay style="max-width: 100%; max-height: 700px;" id="pollVideo" crossorigin="anonymous">
+        <source src="${currentPoll.mediaUrl}" type="${videoType}">
         Your browser does not support the video tag.
       </video>
       <div id="videoError" style="display: none; color: #e53e3e; margin-top: 10px; padding: 15px; background: #fed7d7; border-radius: 8px;">
@@ -50,7 +57,8 @@ function displayPoll(poll, hasVoted = false, voterRating = null) {
     setTimeout(() => {
       const video = document.getElementById('pollVideo');
       if (video) {
-        video.addEventListener('error', () => {
+        video.addEventListener('error', (e) => {
+          console.error('Video load error:', e);
           document.getElementById('videoError').style.display = 'block';
         });
       }

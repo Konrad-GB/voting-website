@@ -126,15 +126,26 @@ async function startPoll(pollIndex) {
 
     const mediaContainer = document.getElementById('currentPollMedia');
     if (currentPoll.mediaType === 'video') {
+      // Detect video type from URL
+      const url = currentPoll.mediaUrl.toLowerCase();
+      let videoType = 'video/mp4';
+      if (url.includes('.webm')) videoType = 'video/webm';
+      else if (url.includes('.mov')) videoType = 'video/quicktime';
+      else if (url.includes('.avi')) videoType = 'video/x-msvideo';
+
       mediaContainer.innerHTML = `
-        <video controls autoplay style="max-width: 100%; max-height: 700px;" id="pollVideo">
-          <source src="${currentPoll.mediaUrl}" type="video/mp4">
+        <video controls autoplay style="max-width: 100%; max-height: 700px;" id="pollVideo" crossorigin="anonymous">
+          <source src="${currentPoll.mediaUrl}" type="${videoType}">
           Your browser does not support the video tag.
         </video>
         <div id="videoError" style="display: none; color: #e53e3e; margin-top: 10px; padding: 15px; background: #fed7d7; border-radius: 8px;">
           <strong>⚠️ Video failed to load</strong><br>
-          This may be due to CORS restrictions or authentication requirements.<br>
-          Try using: Google Drive, Imgur, Streamable, or direct server URLs.
+          URL: <code style="font-size: 11px; word-break: break-all;">${currentPoll.mediaUrl}</code><br><br>
+          Possible issues: CORS restrictions, authentication required, or unsupported format.<br>
+          <strong>Tips:</strong><br>
+          • For Imgur: Right-click video → "Copy video address" (must end in .mp4 or .webm)<br>
+          • For Google Drive: Use direct download link format<br>
+          • Try a different hosting service like Streamable
         </div>
       `;
 
@@ -142,8 +153,16 @@ async function startPoll(pollIndex) {
       setTimeout(() => {
         const video = document.getElementById('pollVideo');
         if (video) {
-          video.addEventListener('error', () => {
+          video.addEventListener('error', (e) => {
+            console.error('Video load error:', e);
+            console.error('Video URL:', currentPoll.mediaUrl);
+            console.error('Video type:', videoType);
             document.getElementById('videoError').style.display = 'block';
+          });
+
+          // Also check if video can load
+          video.addEventListener('loadeddata', () => {
+            console.log('Video loaded successfully:', currentPoll.mediaUrl);
           });
         }
       }, 100);
