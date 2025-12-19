@@ -1,4 +1,6 @@
 const sessionId = window.location.pathname.split('/')[2];
+const urlParams = new URLSearchParams(window.location.search);
+const mode = urlParams.get('mode'); // 'edit' or 'present' or null (live)
 
 let polls = [];
 let currentPollIndex = -1;
@@ -7,6 +9,39 @@ let pollingInterval = null;
 let completedPolls = []; // Store results of completed polls
 
 document.getElementById('sessionId').textContent = sessionId;
+
+// Load existing polls if in edit or present mode
+async function loadExistingPolls() {
+  try {
+    const response = await fetch(`/api/session/${sessionId}`);
+    if (response.ok) {
+      const data = await response.json();
+      if (data.polls && data.polls.length > 0) {
+        polls = data.polls;
+        updatePollsList();
+        document.getElementById('startVotingBtn').disabled = false;
+      }
+    }
+  } catch (error) {
+    console.error('Error loading existing polls:', error);
+  }
+}
+
+// If in edit or present mode, load existing polls
+if (mode === 'edit' || mode === 'present') {
+  loadExistingPolls();
+}
+
+// Update button text based on mode
+if (mode === 'edit') {
+  document.getElementById('startVotingBtn').textContent = 'Save & Exit';
+  document.getElementById('startVotingBtn').onclick = function() {
+    alert('Session saved! You can present it anytime from the saved sessions page.');
+    window.location.href = '/session-select';
+  };
+} else if (mode === 'present') {
+  document.getElementById('startVotingBtn').textContent = 'Start Presenting';
+}
 
 document.getElementById('pollForm').addEventListener('submit', async (e) => {
   e.preventDefault();

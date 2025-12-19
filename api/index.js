@@ -66,6 +66,10 @@ app.get('/host-login', (req, res) => {
   serveHTML(path.join(__dirname, '..', 'views', 'host-login.html'), res);
 });
 
+app.get('/session-select', (req, res) => {
+  serveHTML(path.join(__dirname, '..', 'views', 'session-select.html'), res);
+});
+
 app.get('/join-session', (req, res) => {
   serveHTML(path.join(__dirname, '..', 'views', 'join-session.html'), res);
 });
@@ -116,17 +120,116 @@ app.post('/api/host/login', async (req, res) => {
   const { username, password } = req.body;
 
   if (username === 'GrowthBossHosting' && password === 'y&%)U#2+${QF/wG7') {
+    // Generate a simple auth token (in production, use JWT)
+    const token = uuidv4();
+    await redis.set(`host:token:${token}`, 'authorized', { ex: 86400 }); // 24 hour token
+    res.json({ success: true, token });
+  } else {
+    res.status(401).json({ success: false, error: 'Invalid credentials' });
+  }
+});
+
+// Middleware to check host authorization
+async function checkHostAuth(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const token = authHeader.substring(7);
+  const auth = await redis.get(`host:token:${token}`);
+
+  if (auth !== 'authorized') {
+    return res.status(401).json({ error: 'Invalid or expired token' });
+  }
+
+  next();
+}
+
+// Create new session (live or saved)
+app.post('/api/host/create-session', checkHostAuth, async (req, res) => {
+  try {
+    const { isLive, sessionName } = req.body;
     const sessionId = uuidv4().substring(0, 8);
-    await saveSession(sessionId, {
+
+    const sessionData = {
       id: sessionId,
+      name: sessionName || `Session ${sessionId}`,
       polls: [],
       currentPollIndex: -1,
       votes: new Map(),
-      voters: new Map()
-    });
+      voters: new Map(),
+      isLive: isLive || false,
+      created: new Date().toISOString(),
+      status: 'draft' // draft, presenting, completed
+    };
+
+    await saveSession(sessionId, sessionData);
+
+    // If not live, also save to saved sessions list
+    if (!isLive) {
+      const savedSessions = await redis.get('host:saved-sessions') || [];
+      savedSessions.push({
+        id: sessionId,
+        name: sessionData.name,
+        created: sessionData.created
+      });
+      await redis.set('host:saved-sessions', savedSessions);
+    }
+
     res.json({ success: true, sessionId });
-  } else {
-    res.status(401).json({ success: false, error: 'Invalid credentials' });
+  } catch (error) {
+    console.error('Error creating session:', error);
+    res.status(500).json({ error: 'Failed to create session' });
+  }
+});
+
+// Get saved sessions
+app.get('/api/host/saved-sessions', checkHostAuth, async (req, res) => {
+  try {
+    const savedSessionsList = await redis.get('host:saved-sessions') || [];
+
+    // Fetch full session data for each
+    const sessions = await Promise.all(
+      savedSessionsList.map(async (item) => {
+        const session = await getSession(item.id);
+        return session ? {
+          id: session.id,
+          name: session.name,
+          polls: session.polls,
+          created: session.created,
+          status: session.status
+        } : null;
+      })
+    );
+
+    // Filter out null values (sessions that no longer exist)
+    const validSessions = sessions.filter(s => s !== null);
+
+    res.json({ sessions: validSessions });
+  } catch (error) {
+    console.error('Error fetching saved sessions:', error);
+    res.status(500).json({ error: 'Failed to fetch saved sessions' });
+  }
+});
+
+// Delete saved session
+app.delete('/api/host/session/:sessionId', checkHostAuth, async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+
+    // Remove from saved sessions list
+    const savedSessions = await redis.get('host:saved-sessions') || [];
+    const filtered = savedSessions.filter(s => s.id !== sessionId);
+    await redis.set('host:saved-sessions', filtered);
+
+    // Delete the session data
+    await redis.del(`session:${sessionId}`);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting session:', error);
+    res.status(500).json({ error: 'Failed to delete session' });
   }
 });
 

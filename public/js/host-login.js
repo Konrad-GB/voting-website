@@ -15,7 +15,10 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     const data = await response.json();
 
     if (data.success) {
-      window.location.href = `/host/${data.sessionId}`;
+      // Store auth token
+      sessionStorage.setItem('hostToken', data.token);
+      // Redirect to session selection page
+      window.location.href = '/session-select';
     } else {
       errorDiv.textContent = data.error || 'Invalid credentials';
       errorDiv.classList.remove('hidden');
