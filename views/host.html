@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Host Dashboard</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="container">
+    <div class="host-dashboard">
+      <div class="header">
+        <h1>Host Dashboard</h1>
+        <div class="session-info">
+          <div class="session-id-box">
+            <label>Session ID:</label>
+            <div class="id-display">
+              <strong id="sessionId"></strong>
+              <button onclick="copySessionId()" class="btn btn-small">Copy ID</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="setup-section" id="setupSection">
+        <h2>Setup Your Polls</h2>
+        <form id="pollForm" class="poll-form">
+          <div class="form-group">
+            <label for="pollTitle">Poll Question/Title:</label>
+            <input type="text" id="pollTitle" required placeholder="e.g., Rate this design concept">
+          </div>
+          <div class="form-group">
+            <label for="mediaFile">Upload Video/Image:</label>
+            <input type="file" id="mediaFile" accept="image/*,video/*" required>
+          </div>
+          <button type="submit" class="btn btn-primary">Add Poll</button>
+        </form>
+
+        <div class="polls-list" id="pollsList">
+          <h3>Created Polls:</h3>
+          <div id="pollsContainer"></div>
+        </div>
+
+        <button id="startVotingBtn" class="btn btn-success" disabled>Start Voting Session</button>
+      </div>
+
+      <div class="voting-section hidden" id="votingSection">
+        <div class="current-poll">
+          <h2 id="currentPollTitle"></h2>
+          <div id="currentPollMedia" class="media-container"></div>
+
+          <div class="host-vote-section">
+            <h3>Your Vote</h3>
+            <div class="rating-input-group">
+              <input type="range" id="hostRatingSlider" min="0" max="10" value="5">
+              <input type="number" id="hostRatingInput" min="0" max="10" value="5">
+            </div>
+            <button id="hostSubmitBtn" class="btn btn-success">Submit Your Vote</button>
+            <div id="hostVoteMessage" class="submit-message hidden"></div>
+          </div>
+
+          <div class="results-panel">
+            <h3>Live Results</h3>
+            <div class="stats">
+              <div class="stat-box">
+                <span class="stat-label">Total Votes:</span>
+                <span class="stat-value" id="totalVotes">0</span>
+              </div>
+              <div class="stat-box">
+                <span class="stat-label">Average Rating:</span>
+                <span class="stat-value" id="averageRating">-</span>
+              </div>
+            </div>
+            <div id="ratingsList" class="ratings-list"></div>
+          </div>
+
+          <div class="poll-controls">
+            <button id="nextPollBtn" class="btn btn-primary">Next Poll</button>
+            <span id="pollProgress"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/host.js"></script>
+</body>
+</html>
