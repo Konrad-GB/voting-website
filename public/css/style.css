@@ -529,32 +529,38 @@ h3 {
   right: 20px;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
-  padding: 15px 20px;
-  border-radius: 12px;
+  padding: 12px;
+  border-radius: 50%;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 0;
   z-index: 1000;
-  min-width: 250px;
+  width: 60px;
+  height: 60px;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.music-player.minimized {
-  min-width: auto;
-  padding: 12px;
+.music-player:hover {
+  width: 300px;
+  border-radius: 12px;
+  padding: 15px 20px;
+  gap: 15px;
 }
 
 .music-controls {
   display: flex;
   align-items: center;
   gap: 12px;
+  white-space: nowrap;
 }
 
 .music-btn {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 20px;
+  font-size: 24px;
   padding: 8px;
   border-radius: 50%;
   width: 40px;
@@ -564,6 +570,7 @@ h3 {
   justify-content: center;
   transition: all 0.3s ease;
   color: #667eea;
+  flex-shrink: 0;
 }
 
 .music-btn:hover {
@@ -575,10 +582,32 @@ h3 {
   transform: scale(0.95);
 }
 
+.music-player #playPauseBtn {
+  opacity: 0;
+  width: 0;
+  padding: 0;
+  margin: 0;
+  transition: all 0.3s ease;
+}
+
+.music-player:hover #playPauseBtn {
+  opacity: 1;
+  width: 40px;
+  padding: 8px;
+}
+
 .volume-control {
   display: flex;
   align-items: center;
   gap: 10px;
+  opacity: 0;
+  width: 0;
+  transition: all 0.3s ease;
+}
+
+.music-player:hover .volume-control {
+  opacity: 1;
+  width: auto;
 }
 
 .volume-slider {
@@ -614,6 +643,7 @@ h3 {
   font-size: 12px;
   color: #666;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 @media (max-width: 768px) {
@@ -651,7 +681,12 @@ h3 {
   .music-player {
     bottom: 10px;
     right: 10px;
-    min-width: 200px;
+    width: 50px;
+    height: 50px;
+  }
+
+  .music-player:hover {
+    width: 250px;
   }
 
   .volume-slider {
