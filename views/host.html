@@ -29,9 +29,28 @@
             <label for="pollTitle">Poll Question/Title:</label>
             <input type="text" id="pollTitle" required placeholder="e.g., Rate this design concept">
           </div>
+
           <div class="form-group">
-            <label for="mediaUrl">Media URL (Image or Video):</label>
-            <input type="url" id="mediaUrl" required placeholder="https://example.com/image.jpg or video.mp4">
+            <label for="pollTimer">Timer (seconds):</label>
+            <input type="number" id="pollTimer" min="10" max="600" value="60" placeholder="60">
+            <small style="color: #666; display: block; margin-top: 5px;">
+              How long voters have to rate this poll (10-600 seconds, default: 60)
+            </small>
+          </div>
+
+          <div class="form-group">
+            <label>Media Items:</label>
+            <div id="mediaItemsContainer">
+              <div class="media-item-input">
+                <input type="url" class="media-url-input" placeholder="https://example.com/image.jpg or YouTube URL" required>
+                <select class="media-type-select">
+                  <option value="image">Image</option>
+                  <option value="video">Video</option>
+                </select>
+                <button type="button" class="btn btn-small remove-media-btn" style="display: none;">Remove</button>
+              </div>
+            </div>
+            <button type="button" id="addMediaBtn" class="btn btn-small btn-secondary" style="margin-top: 10px;">+ Add Another Media</button>
             <small style="color: #666; display: block; margin-top: 5px;">
               <strong>📹 For Videos:</strong> Use YouTube URLs (e.g., https://youtube.com/watch?v=xxxxx or https://youtu.be/xxxxx)<br>
               <strong>🖼️ For Images:</strong> Use direct image URLs from Imgur, etc. (must end in .jpg, .png, .gif, .webp, etc.)<br>
@@ -53,6 +72,9 @@
 
       <div class="voting-section hidden" id="votingSection">
         <div class="current-poll">
+          <div class="timer-display" id="timerDisplay">
+            <span id="timerText">Time remaining: <strong id="timerValue">60</strong>s</span>
+          </div>
           <h2 id="currentPollTitle"></h2>
           <div id="currentPollMedia" class="media-container"></div>
 

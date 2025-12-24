@@ -4,6 +4,7 @@ let currentPoll = null;
 let voterId = localStorage.getItem(`voterId_${sessionId}`);
 let pollingInterval = null;
 let lastPollId = null;
+let timerInterval = null;
 
 if (!voterId) {
   window.location.href = '/join-session';
@@ -32,33 +33,43 @@ function displayPoll(poll, hasVoted = false, voterRating = null) {
 
   document.getElementById('pollTitle').textContent = currentPoll.title;
 
-  const mediaContainer = document.getElementById('pollMedia');
-
-  if (currentPoll.mediaType === 'video') {
-    // Embed YouTube video
-    mediaContainer.innerHTML = `
-      <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%;">
-        <iframe
-          src="${currentPoll.mediaUrl}"
-          style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowfullscreen>
-        </iframe>
-      </div>
-    `;
-  } else {
-    // Display image
-    mediaContainer.innerHTML = `
-      <img src="${currentPoll.mediaUrl}" alt="${currentPoll.title}"
-           style="max-width: 100%; max-height: 700px; display: block; margin: 0 auto; border-radius: 8px;"
-           onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-      <div style="display: none; text-align: center; padding: 40px; background: #fed7d7; border-radius: 12px; color: #e53e3e;">
-        <strong>⚠️ Image failed to load</strong><br>
-        URL: ${currentPoll.mediaUrl}<br><br>
-        Make sure the image URL is publicly accessible.
-      </div>
-    `;
+  // Start timer
+  if (currentPoll.timer && currentPoll.startTime) {
+    const elapsed = Math.floor((Date.now() - currentPoll.startTime) / 1000);
+    const timeLeft = Math.max(0, currentPoll.timer - elapsed);
+    startTimer(timeLeft);
   }
+
+  // Render all media items
+  const mediaContainer = document.getElementById('pollMedia');
+  mediaContainer.innerHTML = currentPoll.mediaItems.map(item => {
+    if (item.type === 'video') {
+      return `
+        <div class="media-gallery-item" style="margin-bottom: 20px;">
+          <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%;">
+            <iframe
+              src="${item.url}"
+              style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen>
+            </iframe>
+          </div>
+        </div>
+      `;
+    } else {
+      return `
+        <div class="media-gallery-item" style="margin-bottom: 20px;">
+          <img src="${item.url}" alt="Poll media"
+               style="max-width: 100%; max-height: 500px; display: block; margin: 0 auto; border-radius: 8px;"
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+          <div style="display: none; text-align: center; padding: 40px; background: #fed7d7; border-radius: 12px; color: #e53e3e;">
+            <strong>⚠️ Image failed to load</strong><br>
+            URL: ${item.url}
+          </div>
+        </div>
+      `;
+    }
+  }).join('');
 
   if (hasVoted && voterRating !== null) {
     ratingSlider.value = voterRating;
@@ -150,3 +161,37 @@ document.getElementById('submitRatingBtn').addEventListener('click', async () =>
     messageDiv.classList.remove('hidden');
   }
 });
+
+function startTimer(duration) {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+  }
+
+  let timeLeft = duration;
+  const timerValue = document.getElementById('timerValue');
+  const timerDisplay = document.getElementById('timerDisplay');
+
+  if (!timerValue || !timerDisplay) return;
+
+  timerValue.textContent = timeLeft;
+  timerDisplay.style.background = '#48bb78';
+  timerDisplay.style.color = 'white';
+
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    timerValue.textContent = timeLeft;
+
+    // Change color as time runs out
+    if (timeLeft <= 10) {
+      timerDisplay.style.background = '#e53e3e';
+    } else if (timeLeft <= 30) {
+      timerDisplay.style.background = '#ed8936';
+    }
+
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      timerDisplay.style.background = '#718096';
+      timerValue.textContent = '0';
+    }
+  }, 1000);
+}

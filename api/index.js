@@ -253,29 +253,32 @@ app.post('/api/session/verify', async (req, res) => {
 app.post('/api/session/:sessionId/poll', async (req, res) => {
   try {
     const { sessionId } = req.params;
-    const { title, mediaUrl, mediaType } = req.body;
+    const { title, mediaItems, timer } = req.body;
     const session = await getSession(sessionId);
 
     if (!session) {
       return res.status(404).json({ error: 'Session not found' });
     }
 
-    if (!mediaUrl) {
-      return res.status(400).json({ error: 'Media URL is required' });
+    if (!mediaItems || mediaItems.length === 0) {
+      return res.status(400).json({ error: 'At least one media item is required' });
     }
 
-    // Validate URL format
-    try {
-      new URL(mediaUrl);
-    } catch (e) {
-      return res.status(400).json({ error: 'Invalid URL format' });
+    // Validate all media URLs
+    for (const item of mediaItems) {
+      try {
+        new URL(item.url);
+      } catch (e) {
+        return res.status(400).json({ error: `Invalid URL format: ${item.url}` });
+      }
     }
 
     const poll = {
       id: uuidv4(),
       title,
-      mediaUrl,
-      mediaType: mediaType || 'image' // 'image' or 'video'
+      mediaItems, // Array of { url, type: 'image'|'video' }
+      timer: timer || 60, // Default 60 seconds
+      startTime: null // Will be set when poll starts
     };
 
     session.polls.push(poll);
@@ -347,6 +350,7 @@ app.post('/api/session/:sessionId/start/:pollIndex', async (req, res) => {
   }
 
   session.currentPollIndex = index;
+  session.polls[index].startTime = Date.now(); // Set start time for timer
   session.votes.set(session.polls[index].id, new Map());
   await saveSession(sessionId, session);
 

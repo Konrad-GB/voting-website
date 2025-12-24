@@ -664,6 +664,61 @@ h3 {
   white-space: nowrap;
 }
 
+/* Timer Display */
+.timer-display {
+  background: #48bb78;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: background 0.3s ease;
+}
+
+.timer-display strong {
+  font-size: 24px;
+  margin: 0 5px;
+}
+
+/* Media Item Input */
+.media-item-input {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 10px;
+  background: #f7fafc;
+  border-radius: 6px;
+}
+
+.media-url-input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.media-type-select {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+}
+
+/* Media Gallery */
+.media-gallery-item {
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
 @media (max-width: 768px) {
   .welcome-card, .host-dashboard, .voter-view {
     padding: 20px;
@@ -694,6 +749,16 @@ h3 {
 
   .poll-summary {
     flex-wrap: wrap;
+  }
+
+  .timer-display {
+    font-size: 14px;
+    padding: 8px 12px;
+  }
+
+  .media-item-input {
+    flex-direction: column;
+    gap: 10px;
   }
 
   .music-player {
