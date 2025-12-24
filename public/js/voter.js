@@ -40,36 +40,40 @@ function displayPoll(poll, hasVoted = false, voterRating = null) {
     startTimer(timeLeft);
   }
 
-  // Render all media items
+  // Render carousel for media items
   const mediaContainer = document.getElementById('pollMedia');
-  mediaContainer.innerHTML = currentPoll.mediaItems.map(item => {
+
+  if (currentPoll.mediaItems.length === 1) {
+    // Single item - no carousel needed
+    const item = currentPoll.mediaItems[0];
     if (item.type === 'video') {
-      return `
-        <div class="media-gallery-item" style="margin-bottom: 20px;">
-          <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%;">
-            <iframe
-              src="${item.url}"
-              style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowfullscreen>
-            </iframe>
-          </div>
+      mediaContainer.innerHTML = `
+        <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%;">
+          <iframe src="${item.url}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
+          </iframe>
         </div>
       `;
     } else {
-      return `
-        <div class="media-gallery-item" style="margin-bottom: 20px;">
-          <img src="${item.url}" alt="Poll media"
-               style="max-width: 100%; max-height: 500px; display: block; margin: 0 auto; border-radius: 8px;"
-               onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-          <div style="display: none; text-align: center; padding: 40px; background: #fed7d7; border-radius: 12px; color: #e53e3e;">
-            <strong>⚠️ Image failed to load</strong><br>
-            URL: ${item.url}
-          </div>
-        </div>
+      mediaContainer.innerHTML = `
+        <img src="${item.url}" alt="Poll media" style="max-width: 100%; max-height: 500px; display: block; margin: 0 auto; border-radius: 8px;">
       `;
     }
-  }).join('');
+  } else {
+    // Multiple items - show first one with carousel controls
+    mediaContainer.innerHTML = `
+      <div class="carousel-container">
+        <button class="carousel-arrow carousel-prev" onclick="voterCarouselPrev()">‹</button>
+        <div class="carousel-content" id="voterCarouselContent"></div>
+        <button class="carousel-arrow carousel-next" onclick="voterCarouselNext()">›</button>
+      </div>
+      <div class="carousel-indicators" id="voterCarouselIndicators"></div>
+    `;
+
+    window.voterCarouselIndex = 0;
+    window.voterCarouselItems = currentPoll.mediaItems;
+    renderVoterCarouselItem(0);
+  }
 
   if (hasVoted && voterRating !== null) {
     ratingSlider.value = voterRating;
@@ -194,4 +198,45 @@ function startTimer(duration) {
       timerValue.textContent = '0';
     }
   }, 1000);
+}
+
+// Carousel functions for voter view
+function renderVoterCarouselItem(index) {
+  const item = window.voterCarouselItems[index];
+  const content = document.getElementById('voterCarouselContent');
+
+  if (item.type === 'video') {
+    content.innerHTML = `
+      <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%;">
+        <iframe src="${item.url}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
+        </iframe>
+      </div>
+    `;
+  } else {
+    content.innerHTML = `
+      <img src="${item.url}" alt="Poll media" style="max-width: 100%; max-height: 500px; display: block; margin: 0 auto; border-radius: 8px;">
+    `;
+  }
+
+  // Update indicators
+  const indicators = document.getElementById('voterCarouselIndicators');
+  indicators.innerHTML = window.voterCarouselItems.map((_, i) =>
+    `<span class="carousel-dot ${i === index ? 'active' : ''}" onclick="voterCarouselGoto(${i})"></span>`
+  ).join('');
+}
+
+function voterCarouselPrev() {
+  window.voterCarouselIndex = (window.voterCarouselIndex - 1 + window.voterCarouselItems.length) % window.voterCarouselItems.length;
+  renderVoterCarouselItem(window.voterCarouselIndex);
+}
+
+function voterCarouselNext() {
+  window.voterCarouselIndex = (window.voterCarouselIndex + 1) % window.voterCarouselItems.length;
+  renderVoterCarouselItem(window.voterCarouselIndex);
+}
+
+function voterCarouselGoto(index) {
+  window.voterCarouselIndex = index;
+  renderVoterCarouselItem(index);
 }

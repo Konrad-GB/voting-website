@@ -43,69 +43,44 @@ if (mode === 'edit') {
   document.getElementById('startVotingBtn').textContent = 'Start Presenting';
 }
 
-// Add media item functionality
-document.getElementById('addMediaBtn').addEventListener('click', () => {
-  const container = document.getElementById('mediaItemsContainer');
-  const mediaItem = document.createElement('div');
-  mediaItem.className = 'media-item-input';
-  mediaItem.innerHTML = `
-    <input type="url" class="media-url-input" placeholder="https://example.com/image.jpg or YouTube URL" required>
-    <select class="media-type-select">
-      <option value="image">Image</option>
-      <option value="video">Video</option>
-    </select>
-    <button type="button" class="btn btn-small remove-media-btn">Remove</button>
-  `;
-  container.appendChild(mediaItem);
-  updateRemoveButtons();
-});
-
-// Handle remove media button
-document.getElementById('mediaItemsContainer').addEventListener('click', (e) => {
-  if (e.target.classList.contains('remove-media-btn')) {
-    e.target.parentElement.remove();
-    updateRemoveButtons();
-  }
-});
-
-function updateRemoveButtons() {
-  const items = document.querySelectorAll('.media-item-input');
-  items.forEach((item, index) => {
-    const removeBtn = item.querySelector('.remove-media-btn');
-    removeBtn.style.display = items.length > 1 ? 'inline-block' : 'none';
-  });
-}
-
 document.getElementById('pollForm').addEventListener('submit', async (e) => {
   e.preventDefault();
 
   const title = document.getElementById('pollTitle').value;
   const timer = parseInt(document.getElementById('pollTimer').value) || 60;
+  const mediaUrlsText = document.getElementById('mediaUrls').value.trim();
   const submitBtn = e.target.querySelector('button[type="submit"]');
 
-  // Collect all media items
-  const mediaInputs = document.querySelectorAll('.media-item-input');
+  if (!mediaUrlsText) {
+    alert('Please enter at least one media URL');
+    return;
+  }
+
+  // Split by lines and filter empty lines
+  const urls = mediaUrlsText.split('\n').map(url => url.trim()).filter(url => url.length > 0);
+
+  if (urls.length === 0) {
+    alert('Please enter at least one valid media URL');
+    return;
+  }
+
   const mediaItems = [];
 
-  for (const input of mediaInputs) {
-    const url = input.querySelector('.media-url-input').value.trim();
-    const type = input.querySelector('.media-type-select').value;
-
-    if (!url) continue;
-
+  for (const url of urls) {
     // Validate URL format
     try {
       new URL(url);
     } catch (e) {
-      alert('Please enter valid URLs for all media items');
+      alert(`Invalid URL: ${url}`);
       return;
     }
 
-    // Process URL based on type
     let processedUrl = url;
+    let type = 'image';
 
-    if (type === 'video' && (url.includes('youtube.com') || url.includes('youtu.be'))) {
-      // Extract YouTube video ID
+    // Check if it's a YouTube URL
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      type = 'video';
       let videoId = null;
 
       // Format 1: https://www.youtube.com/watch?v=VIDEO_ID
@@ -129,17 +104,12 @@ document.getElementById('pollForm').addEventListener('submit', async (e) => {
       if (videoId) {
         processedUrl = `https://www.youtube.com/embed/${videoId}`;
       } else {
-        alert('Could not extract YouTube video ID from URL');
+        alert('Could not extract YouTube video ID from URL: ' + url);
         return;
       }
     }
 
     mediaItems.push({ url: processedUrl, type });
-  }
-
-  if (mediaItems.length === 0) {
-    alert('Please add at least one media item');
-    return;
   }
 
   // Show loading state
@@ -174,13 +144,7 @@ document.getElementById('pollForm').addEventListener('submit', async (e) => {
     // Reset form
     document.getElementById('pollForm').reset();
     document.getElementById('pollTimer').value = 60;
-
-    // Remove extra media items
-    const container = document.getElementById('mediaItemsContainer');
-    while (container.children.length > 1) {
-      container.removeChild(container.lastChild);
-    }
-    updateRemoveButtons();
+    document.getElementById('mediaUrls').value = '';
 
     document.getElementById('startVotingBtn').disabled = false;
 
@@ -236,36 +200,40 @@ async function startPoll(pollIndex) {
 
     document.getElementById('currentPollTitle').textContent = currentPoll.title;
 
-    // Render all media items
+    // Render carousel for media items
     const mediaContainer = document.getElementById('currentPollMedia');
-    mediaContainer.innerHTML = currentPoll.mediaItems.map(item => {
+
+    if (currentPoll.mediaItems.length === 1) {
+      // Single item - no carousel needed
+      const item = currentPoll.mediaItems[0];
       if (item.type === 'video') {
-        return `
-          <div class="media-gallery-item" style="margin-bottom: 20px;">
-            <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%;">
-              <iframe
-                src="${item.url}"
-                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowfullscreen>
-              </iframe>
-            </div>
+        mediaContainer.innerHTML = `
+          <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%;">
+            <iframe src="${item.url}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
+            </iframe>
           </div>
         `;
       } else {
-        return `
-          <div class="media-gallery-item" style="margin-bottom: 20px;">
-            <img src="${item.url}" alt="Poll media"
-                 style="max-width: 100%; max-height: 500px; display: block; margin: 0 auto; border-radius: 8px;"
-                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-            <div style="display: none; text-align: center; padding: 40px; background: #fed7d7; border-radius: 12px; color: #e53e3e;">
-              <strong>⚠️ Image failed to load</strong><br>
-              URL: ${item.url}
-            </div>
-          </div>
+        mediaContainer.innerHTML = `
+          <img src="${item.url}" alt="Poll media" style="max-width: 100%; max-height: 500px; display: block; margin: 0 auto; border-radius: 8px;">
         `;
       }
-    }).join('');
+    } else {
+      // Multiple items - show first one with carousel controls
+      mediaContainer.innerHTML = `
+        <div class="carousel-container">
+          <button class="carousel-arrow carousel-prev" onclick="hostCarouselPrev()">‹</button>
+          <div class="carousel-content" id="hostCarouselContent"></div>
+          <button class="carousel-arrow carousel-next" onclick="hostCarouselNext()">›</button>
+        </div>
+        <div class="carousel-indicators" id="hostCarouselIndicators"></div>
+      `;
+
+      window.hostCarouselIndex = 0;
+      window.hostCarouselItems = currentPoll.mediaItems;
+      renderHostCarouselItem(0);
+    }
 
     document.getElementById('totalVotes').textContent = '0';
     document.getElementById('averageRating').textContent = '-';
@@ -452,4 +420,45 @@ function copySessionId() {
       button.textContent = originalText;
     }, 2000);
   });
+}
+
+// Carousel functions for host view
+function renderHostCarouselItem(index) {
+  const item = window.hostCarouselItems[index];
+  const content = document.getElementById('hostCarouselContent');
+
+  if (item.type === 'video') {
+    content.innerHTML = `
+      <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%;">
+        <iframe src="${item.url}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
+        </iframe>
+      </div>
+    `;
+  } else {
+    content.innerHTML = `
+      <img src="${item.url}" alt="Poll media" style="max-width: 100%; max-height: 500px; display: block; margin: 0 auto; border-radius: 8px;">
+    `;
+  }
+
+  // Update indicators
+  const indicators = document.getElementById('hostCarouselIndicators');
+  indicators.innerHTML = window.hostCarouselItems.map((_, i) =>
+    `<span class="carousel-dot ${i === index ? 'active' : ''}" onclick="hostCarouselGoto(${i})"></span>`
+  ).join('');
+}
+
+function hostCarouselPrev() {
+  window.hostCarouselIndex = (window.hostCarouselIndex - 1 + window.hostCarouselItems.length) % window.hostCarouselItems.length;
+  renderHostCarouselItem(window.hostCarouselIndex);
+}
+
+function hostCarouselNext() {
+  window.hostCarouselIndex = (window.hostCarouselIndex + 1) % window.hostCarouselItems.length;
+  renderHostCarouselItem(window.hostCarouselIndex);
+}
+
+function hostCarouselGoto(index) {
+  window.hostCarouselIndex = index;
+  renderHostCarouselItem(index);
 }

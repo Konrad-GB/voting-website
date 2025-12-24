@@ -39,24 +39,14 @@
           </div>
 
           <div class="form-group">
-            <label>Media Items:</label>
-            <div id="mediaItemsContainer">
-              <div class="media-item-input">
-                <input type="url" class="media-url-input" placeholder="https://example.com/image.jpg or YouTube URL" required>
-                <select class="media-type-select">
-                  <option value="image">Image</option>
-                  <option value="video">Video</option>
-                </select>
-                <button type="button" class="btn btn-small remove-media-btn" style="display: none;">Remove</button>
-              </div>
-            </div>
-            <button type="button" id="addMediaBtn" class="btn btn-small btn-secondary" style="margin-top: 10px;">+ Add Another Media</button>
+            <label>Media URLs (one per line):</label>
+            <textarea id="mediaUrls" rows="5" placeholder="https://i.imgur.com/example1.jpg&#10;https://youtube.com/watch?v=xxxxx&#10;https://i.imgur.com/example2.png" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; font-family: monospace;"></textarea>
             <small style="color: #666; display: block; margin-top: 5px;">
               <strong>📹 For Videos:</strong> Use YouTube URLs (e.g., https://youtube.com/watch?v=xxxxx or https://youtu.be/xxxxx)<br>
-              <strong>🖼️ For Images:</strong> Use direct image URLs from Imgur, etc. (must end in .jpg, .png, .gif, .webp, etc.)<br>
+              <strong>🖼️ For Images:</strong> Use Imgur direct image URLs (e.g., https://i.imgur.com/xxxxx.jpg)<br>
               <br>
-              <strong style="color: #48bb78;">✓ Works:</strong> YouTube videos, Imgur images, direct image URLs<br>
-              <strong style="color: #e53e3e;">✗ Won't work:</strong> Video files (.mp4), Google Drive, ClickUp, private URLs
+              <strong style="color: #48bb78;">✓ Multiple items:</strong> Enter one URL per line for carousel navigation<br>
+              <strong style="color: #667eea;">ℹ️ Navigation:</strong> Voters will see arrows to browse through items
             </small>
           </div>
           <button type="submit" class="btn btn-primary">Add Poll</button>
