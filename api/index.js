@@ -491,6 +491,17 @@ app.post('/api/session/:sessionId/vote', async (req, res) => {
     return res.status(400).json({ error: 'Poll not active' });
   }
 
+  // Find the poll to check timer
+  const poll = session.polls.find(p => p.id === pollId);
+  if (poll && poll.timer && poll.startTime) {
+    const elapsed = Math.floor((Date.now() - poll.startTime) / 1000);
+    const timeLeft = Math.max(0, poll.timer - elapsed);
+
+    if (timeLeft <= 0) {
+      return res.status(403).json({ error: 'Voting period has ended for this poll' });
+    }
+  }
+
   const ratingValue = parseInt(rating);
   if (ratingValue < 0 || ratingValue > 10) {
     return res.status(400).json({ error: 'Rating must be between 0 and 10' });

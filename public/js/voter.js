@@ -75,6 +75,9 @@ function displayPoll(poll, hasVoted = false, voterRating = null) {
     renderVoterCarouselItem(0);
   }
 
+  // Track voting status
+  ratingSlider.dataset.hasVoted = hasVoted ? 'true' : 'false';
+
   if (hasVoted && voterRating !== null) {
     ratingSlider.value = voterRating;
     ratingInput.value = voterRating;
@@ -89,10 +92,29 @@ function displayPoll(poll, hasVoted = false, voterRating = null) {
   } else {
     ratingSlider.value = 5;
     ratingInput.value = 5;
-    ratingSlider.disabled = false;
-    ratingInput.disabled = false;
-    document.getElementById('submitMessage').classList.add('hidden');
-    document.getElementById('submitRatingBtn').disabled = false;
+
+    // Check if timer has expired
+    if (currentPoll.timer && currentPoll.startTime) {
+      const elapsed = Math.floor((Date.now() - currentPoll.startTime) / 1000);
+      const timeLeft = Math.max(0, currentPoll.timer - elapsed);
+
+      if (timeLeft <= 0) {
+        // Timer expired - disable voting
+        disableVotingControls();
+      } else {
+        // Timer still active - enable voting
+        ratingSlider.disabled = false;
+        ratingInput.disabled = false;
+        document.getElementById('submitMessage').classList.add('hidden');
+        document.getElementById('submitRatingBtn').disabled = false;
+      }
+    } else {
+      // No timer - enable voting
+      ratingSlider.disabled = false;
+      ratingInput.disabled = false;
+      document.getElementById('submitMessage').classList.add('hidden');
+      document.getElementById('submitRatingBtn').disabled = false;
+    }
   }
 }
 
@@ -134,6 +156,18 @@ document.getElementById('submitRatingBtn').addEventListener('click', async () =>
     return;
   }
 
+  // Check if timer has expired
+  if (currentPoll.timer && currentPoll.startTime) {
+    const elapsed = Math.floor((Date.now() - currentPoll.startTime) / 1000);
+    const timeLeft = Math.max(0, currentPoll.timer - elapsed);
+
+    if (timeLeft <= 0) {
+      alert('Voting period has ended for this poll');
+      disableVotingControls();
+      return;
+    }
+  }
+
   const rating = parseInt(ratingInput.value);
 
   try {
@@ -154,6 +188,8 @@ document.getElementById('submitRatingBtn').addEventListener('click', async () =>
     messageDiv.className = 'submit-message success';
     messageDiv.classList.remove('hidden');
 
+    // Mark as voted
+    ratingSlider.dataset.hasVoted = 'true';
     ratingSlider.disabled = true;
     ratingInput.disabled = true;
     document.getElementById('submitRatingBtn').disabled = true;
@@ -174,12 +210,16 @@ function startTimer(duration) {
   let timeLeft = duration;
   const timerValue = document.getElementById('timerValue');
   const timerDisplay = document.getElementById('timerDisplay');
+  const timerText = document.getElementById('timerText');
 
   if (!timerValue || !timerDisplay) return;
 
   timerValue.textContent = timeLeft;
   timerDisplay.style.background = '#48bb78';
   timerDisplay.style.color = 'white';
+
+  // Enable voting controls at start
+  enableVotingControls();
 
   timerInterval = setInterval(() => {
     timeLeft--;
@@ -196,8 +236,48 @@ function startTimer(duration) {
       clearInterval(timerInterval);
       timerDisplay.style.background = '#718096';
       timerValue.textContent = '0';
+      timerText.innerHTML = '⏱️ <strong>Voting Closed</strong> - Time expired';
+
+      // Disable voting when timer expires
+      disableVotingControls();
     }
   }, 1000);
+}
+
+function disableVotingControls() {
+  const ratingSlider = document.getElementById('ratingSlider');
+  const ratingInput = document.getElementById('ratingInput');
+  const submitBtn = document.getElementById('submitRatingBtn');
+  const messageDiv = document.getElementById('submitMessage');
+
+  // Disable controls
+  ratingSlider.disabled = true;
+  ratingInput.disabled = true;
+  submitBtn.disabled = true;
+
+  // Show message if user hasn't voted
+  if (!messageDiv.classList.contains('success')) {
+    messageDiv.textContent = 'Voting period has ended for this poll';
+    messageDiv.className = 'submit-message error';
+    messageDiv.classList.remove('hidden');
+  }
+}
+
+function enableVotingControls() {
+  const ratingSlider = document.getElementById('ratingSlider');
+  const ratingInput = document.getElementById('ratingInput');
+  const submitBtn = document.getElementById('submitRatingBtn');
+  const messageDiv = document.getElementById('submitMessage');
+
+  // Only enable if user hasn't voted yet
+  const hasVoted = ratingSlider.dataset.hasVoted === 'true';
+
+  if (!hasVoted) {
+    ratingSlider.disabled = false;
+    ratingInput.disabled = false;
+    submitBtn.disabled = false;
+    messageDiv.classList.add('hidden');
+  }
 }
 
 // Carousel functions for voter view
